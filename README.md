@@ -9,3 +9,20 @@
 ## Language Description
 
 - **Pragma**: 
+  - Version pragma: pragma solidity ^0.5.2;
+- **import**: import "filename" as symbolName;
+
+## Structure of a Contract
+
+- Function Modifiers: không thể overloading Function Modifiers
+- Event: 
+- Error:
+- Struct:
+- Enum:
+
+## Type
+
+- x**3 == x*x*x
+- address
+  - address: 
+  - address payable: có thể gửi ethe qua
