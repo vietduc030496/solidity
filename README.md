@@ -26,3 +26,5 @@
 - address
   - address: 
   - address payable: có thể gửi ethe qua
+
+- Data location: memory, storage và calldata
