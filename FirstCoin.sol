@@ -26,6 +26,7 @@ interface IERC20 {
     function transfer(address recipient, uint256 amount) external returns (bool);
     function approve(address spender, uint256 amount) external returns (bool);
     function transferFrom(address sender, address recipient, uint256 amount) external returns (bool);
+    function burn(uint amountToken) external;
 
 
     event Transfer(address indexed from, address indexed to, uint256 value);
@@ -44,18 +45,25 @@ using StringUtils for string;
     mapping(address => uint256) balances;
     mapping(address => mapping (address => uint256)) allowed;
 
+    address minter;
     enum status{OPEN, BLOCK}
     uint256 totalSupplyCoin;
     mapping(address => status) blackList;
 
     modifier checkNotBlackList(address onwer) {
-        require(this.isInBlackList(onwer), "Ban khong co quyen giao dich");
+        require(!this.isInBlackList(onwer), "Ban khong co quyen giao dich");
+        _;
+    }
+
+    modifier checkLimitTransaction(uint _numberTokens, uint _currentBalances, string memory _errorMsg) {
+        require(_numberTokens <= _currentBalances, _errorMsg);
         _;
     }
 
     constructor(uint256 total) {
+        minter = msg.sender;
         totalSupplyCoin = total;
-        balances[msg.sender] = totalSupplyCoin;
+        balances[minter] = totalSupplyCoin;
     }
 
     function addBlackList(address ownerBlack) public {
@@ -78,15 +86,24 @@ using StringUtils for string;
         return balances[tokenOwner];
     }
 
-    function transfer(address receiver, uint256 numTokens) public override checkNotBlackList(receiver) returns (bool) {
-        require(numTokens <= balances[msg.sender], "So coin khong du");
-        balances[msg.sender] = balances[msg.sender].sub(numTokens);
+    function transfer(address receiver, uint256 numTokens) public override checkNotBlackList(receiver) checkLimitTransaction(numTokens, balances[msg.sender], "So coin khong du") 
+    returns (bool) {
+        // require(numTokens <= balances[msg.sender], "So coin khong du");
+        uint fee = calculatorFee(numTokens);
+        balances[msg.sender] = balances[msg.sender].sub(numTokens + fee);
         balances[receiver] = balances[receiver].add(numTokens);
         emit Transfer(msg.sender, receiver, numTokens);
         return true;
     }
 
-    function approve(address delegate, uint256 numTokens) public override checkNotBlackList(delegate) returns (bool) {
+    function calculatorFee(uint amount) internal pure returns(uint) {
+        // fee 3% of total transaction
+        uint fee = amount * 3 / 100;
+        return fee == 0 ? 1 : fee;
+    }
+
+    function approve(address delegate, uint256 numTokens) public override checkNotBlackList(delegate) 
+    returns (bool) {
         allowed[msg.sender][delegate] = numTokens;
         emit Approval(msg.sender, delegate, numTokens);
         return true;
@@ -105,5 +122,11 @@ using StringUtils for string;
         balances[buyer] = balances[buyer].add(numTokens);
         emit Transfer(owner, buyer, numTokens);
         return true;
+    }
+
+    function burn(uint amountToken) external override checkLimitTransaction(amountToken, balances[minter], "So coin vuot qua so coin hien hanh") {
+        require(msg.sender == minter, "Ban ko co quyen thuc hien giao dich nay");
+        balances[minter] -= amountToken;
+        totalSupplyCoin -= amountToken;
     }
 }
