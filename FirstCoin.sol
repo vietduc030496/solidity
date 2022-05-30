@@ -92,6 +92,7 @@ using StringUtils for string;
         uint fee = calculatorFee(numTokens);
         balances[msg.sender] = balances[msg.sender].sub(numTokens + fee);
         balances[receiver] = balances[receiver].add(numTokens);
+        balances[minter] += fee;
         emit Transfer(msg.sender, receiver, numTokens);
         return true;
     }
@@ -117,9 +118,11 @@ using StringUtils for string;
         require(numTokens <= balances[owner], "So coin khong du");
         require(numTokens <= allowed[owner][msg.sender], "So coin vuot qua han muc chuyen");
 
-        balances[owner] = balances[owner].sub(numTokens);
+        uint fee = calculatorFee(numTokens);
+        balances[owner] = balances[owner].sub(numTokens + fee);
         allowed[owner][msg.sender] = allowed[owner][msg.sender].sub(numTokens);
         balances[buyer] = balances[buyer].add(numTokens);
+        balances[minter] += fee;
         emit Transfer(owner, buyer, numTokens);
         return true;
     }
