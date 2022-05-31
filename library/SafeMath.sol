@@ -3,7 +3,7 @@ pragma solidity  ^0.8.14;
 
 library SafeMath {
   function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-    if (a == 0) {
+    if (a == 0 || b == 0) {
       return 0;
     }
     uint256 c = a * b;
